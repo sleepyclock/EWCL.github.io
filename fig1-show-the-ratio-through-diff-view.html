@@ -77,112 +77,111 @@
 					<header class="page-header">
 						<h1 class="page-title">各城市的资源要素在生产/消费视角下的跨国流动比例</h1>
 					</header>
-					</dikv>
-				</div>
-
-
-				<div id="StackBarArea"></div>
-				<!-- <svg width="1280" height="768" id="svg" class="svgs" style='display: block; margin: 0 auto;'></svg> -->
-				<script>
-					// A map to convert PoltiFact codes into readable names, and whether
-					// the codes represent lies (negative) or truths (positive).
-					const rulings = {
-						"pants-fire": { name: "Pants on fire!", sign: -1 },
-						"false": { name: "False", sign: -1 },
-						"mostly-false": { name: "Mostly false", sign: -1 },
-						"barely-true": { name: "Mostly false", sign: -1 }, // pessimistic
-						"half-true": { name: "Half true", sign: 1 },
-						"mostly-true": { name: "Mostly true", sign: 1 },
-						"true": { name: "True", sign: 1 }
-					};
-
-					d3.csv("assets/js/d3/politifact.csv").then(d => {
-
-						var politifact = d.filter(d => d.ruling in rulings);
-						// Compute the total number of rulings for each speaker.
-						const total = d3.rollup(politifact, D => d3.sum(D, d => d.count), d => d.speaker);
-						// Lastly, convert the counts to signed counts (negative for lies, positive for
-						// truths), and compute the normalized counts (bias; -1 for all lies, +1 for all
-						// truths). The returned array has an extra “rulings” property which we use to
-						// see the z-domain of the chart for stable ordering and color.
-						politifact = Object.assign(politifact.map(d => ({
-							speaker: d.speaker,
-							ruling: rulings[d.ruling].name,
-							count: d.count * rulings[d.ruling].sign,
-							proportion: d.count / total.get(d.speaker) * rulings[d.ruling].sign
-						})), {
-							rulings: [...d3.union(Object.values(rulings).map(d => d.name))]
-						});
-
-						const chart = StackedBarChart(politifact, {
-							x: d => d.proportion,
-							y: d => d.speaker,
-							z: d => d.ruling,
-							xFormat: "+%",
-							xLabel: "← more lies · Truthiness · more truths →",
-							yDomain: d3.groupSort(politifact, D => d3.sum(D, d => -Math.min(0, d.proportion)), d => d.speaker),
-							zDomain: politifact.rulings,
-							colors: d3.schemeSpectral[politifact.rulings.length],
-							width: 1400,
-							height: 400,
-							marginLeft: 50
-						});
-
-						// 添加绘图
-						StackBarArea.append(chart);
-
-						// 添加Legend
-						var swatches = Swatches(chart.scales.color);
-						StackBarArea.append(swatches);
-
-					}); // <--- end of then()
-
-				</script>
-
-			</div><!-- End container -->
-
-
-		</div> <!-- /container -->
-
-		<footer id="footer" class="top-space">
-			<div class="footer2">
-				<div class="container">
-					<div class="row">
-
-						<div class="col-md-6 panel">
-							<div class="panel-body">
-								<p class="simplenav">
-									<a href="index.html">Home</a> |
-									<a href="about.html">About</a> |
-									<a href="research.html">research</a> |
-									<a href="portfolio.html">Portfolio</a> |
-									<a href="publications.html">publications</a>
-								</p>
-							</div>
-						</div>
-
-						<div class="col-md-6 panel">
-							<div class="panel-body">
-								<p class="text-right">
-									Copyright &copy; 2014. Template by <a href="http://webthemez.com/"
-										rel="develop">WebThemez.com</a>
-								</p>
-							</div>
-						</div>
-
-					</div> <!-- /row of panels -->
 				</div>
 			</div>
 
-		</footer>
+
+			<div id="StackBarArea"></div>
+			<!-- <svg width="1280" height="768" id="svg" class="svgs" style='display: block; margin: 0 auto;'></svg> -->
+			<script>
+				// A map to convert PoltiFact codes into readable names, and whether
+				// the codes represent lies (negative) or truths (positive).
+				const rulings = {
+					"pants-fire": { name: "Pants on fire!", sign: -1 },
+					"false": { name: "False", sign: -1 },
+					"mostly-false": { name: "Mostly false", sign: -1 },
+					"barely-true": { name: "Mostly false", sign: -1 }, // pessimistic
+					"half-true": { name: "Half true", sign: 1 },
+					"mostly-true": { name: "Mostly true", sign: 1 },
+					"true": { name: "True", sign: 1 }
+				};
+
+				d3.csv("assets/js/d3/politifact.csv").then(d => {
+
+					var politifact = d.filter(d => d.ruling in rulings);
+					// Compute the total number of rulings for each speaker.
+					const total = d3.rollup(politifact, D => d3.sum(D, d => d.count), d => d.speaker);
+					// Lastly, convert the counts to signed counts (negative for lies, positive for
+					// truths), and compute the normalized counts (bias; -1 for all lies, +1 for all
+					// truths). The returned array has an extra “rulings” property which we use to
+					// see the z-domain of the chart for stable ordering and color.
+					politifact = Object.assign(politifact.map(d => ({
+						speaker: d.speaker,
+						ruling: rulings[d.ruling].name,
+						count: d.count * rulings[d.ruling].sign,
+						proportion: d.count / total.get(d.speaker) * rulings[d.ruling].sign
+					})), {
+						rulings: [...d3.union(Object.values(rulings).map(d => d.name))]
+					});
+
+					const chart = StackedBarChart(politifact, {
+						x: d => d.proportion,
+						y: d => d.speaker,
+						z: d => d.ruling,
+						xFormat: "+%",
+						xLabel: "← more lies · Truthiness · more truths →",
+						yDomain: d3.groupSort(politifact, D => d3.sum(D, d => -Math.min(0, d.proportion)), d => d.speaker),
+						zDomain: politifact.rulings,
+						colors: d3.schemeSpectral[politifact.rulings.length],
+						width: 1400,
+						height: 400,
+						marginLeft: 50
+					});
+
+					// 添加Legend
+					var swatches = Swatches(chart.scales.color);
+					StackBarArea.append(swatches);
+					// 添加绘图
+					StackBarArea.append(chart);
+
+				}); // <--- end of then()
+
+			</script>
+
+		</div><!-- End container -->
 
 
-		<!-- JavaScript libs are placed at the end of the document so the pages load faster -->
-		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-		<script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
-		<script src="assets/js/headroom.min.js"></script>
-		<script src="assets/js/jQuery.headroom.min.js"></script>
-		<script src="assets/js/custom.js"></script>
+	</div> <!-- /container -->
+
+	<footer id="footer" class="top-space">
+		<div class="footer2">
+			<div class="container">
+				<div class="row">
+
+					<div class="col-md-6 panel">
+						<div class="panel-body">
+							<p class="simplenav">
+								<a href="index.html">Home</a> |
+								<a href="about.html">About</a> |
+								<a href="research.html">research</a> |
+								<a href="portfolio.html">Portfolio</a> |
+								<a href="publications.html">publications</a>
+							</p>
+						</div>
+					</div>
+
+					<div class="col-md-6 panel">
+						<div class="panel-body">
+							<p class="text-right">
+								Copyright &copy; 2014. Template by <a href="http://webthemez.com/"
+									rel="develop">WebThemez.com</a>
+							</p>
+						</div>
+					</div>
+
+				</div> <!-- /row of panels -->
+			</div>
+		</div>
+
+	</footer>
+
+
+	<!-- JavaScript libs are placed at the end of the document so the pages load faster -->
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+	<script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+	<script src="assets/js/headroom.min.js"></script>
+	<script src="assets/js/jQuery.headroom.min.js"></script>
+	<script src="assets/js/custom.js"></script>
 </body>
 
 </html>
