@@ -123,16 +123,17 @@
 							yDomain: d3.groupSort(politifact, D => d3.sum(D, d => -Math.min(0, d.proportion)), d => d.speaker),
 							zDomain: politifact.rulings,
 							colors: d3.schemeSpectral[politifact.rulings.length],
+							width: 1400,
 							height: 400,
-							width: 1440,
-							marginLeft: 70
+							marginLeft: 50
 						});
+
+						// 添加绘图
+						StackBarArea.append(chart);
 
 						// 添加Legend
 						var swatches = Swatches(chart.scales.color);
 						StackBarArea.append(swatches);
-						// 添加绘图
-						StackBarArea.append(chart);
 
 					}); // <--- end of then()
 
