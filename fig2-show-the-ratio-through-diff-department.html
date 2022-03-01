@@ -140,14 +140,11 @@
 	<script type="text/javascript">
 
 		const rulings = {
-			"本地（生产视角）": { name: "本地（生产视角）", sign: -1 },
-			"国内（生产视角）": { name: "国内（生产视角）", sign: -1 },
-			"国际（生产视角）": { name: "国际（生产视角）", sign: -1 },
-			"本地（消费视角）": { name: "本地（消费视角）", sign: 1 },
-			"国内（消费视角）": { name: "国内（消费视角）", sign: 1 },
-			"国际（消费视角）": { name: "国际（消费视角）", sign: 1 }
+			"生产视角": { name: "生产视角", sign: -1 },
+			"消费视角": { name: "消费视角", sign: 1 }
 		};
 		var item_list = ["Energy", "Water", "CO2", "Land"],
+			dept_list = ['Agriculture', 'Food&tabacco', 'Electricity, Gas &Water', 'Construction', 'Transport', 'Services', 'Others'],
 			region_list = ['全部省份', '北京', '天津', '河北', '山西', '内蒙古', '辽宁', '吉林', '黑龙江', '上海', '江苏', '浙江', '安徽', '福建', '江西', '山东', '河南', '湖北', '湖南', '广东', '广西', '海南', '重庆', '四川', '贵州', '云南', '陕西', '甘肃', '青海', '宁夏', '新疆'];
 		// 将item_list和region_list中的项目增加至两个下拉框
 		d3.select('#selectEWCL').selectAll("option")
@@ -163,12 +160,14 @@
 
 		init();
 		function init() {
-			d3.csv("assets/data/fig1_data.csv").then(d => {
+			d3.csv("assets/data/fig2_data.csv").then(d => {
 				drawChart(d); // 获取数据成功后，绘图
 				$('#selectEWCL').change(function () { drawChart(d); });// 增加 [要素] 和 [省份] 2个下拉框的响应函数
 				$('#selectRegion').change(function () { drawChart(d); });
 			});
 		};
+
+		const colorScheme = d3.schemeSpectral[7];
 		function drawChart(d) {
 			$('#StackBarArea').empty();// 清空绘图区
 			var selectEWCL = document.getElementById('selectEWCL'),
@@ -183,6 +182,7 @@
 			});
 			d = Object.assign(d.map(d => ({
 				region: d.region,
+				dept: d.dept,
 				perspective: d.perspective,
 				value: d.value * rulings[d.perspective].sign,
 			})), {
@@ -191,19 +191,25 @@
 			const chart = StackedBarChart(d, {
 				x: d => d.value,
 				y: d => d.region,
-				z: d => d.perspective,
+				// z: d => d.dept,
+				z: d => {
+					if (d.value >= 0) return d.dept + "";
+					else return d.dept + " ";
+				},
 				// xFormat: "",
 				xLabel: "←  生产视角  ----+----  消费视角  →",
 				yDomain: d3.groupSort(d, D => d3.sum(D, d => -Math.min(0, d.value)), d => d.region),
-				zDomain: d.perspective,
-				colors: d3.schemeSpectral[6],
+				zDomain: d.dept,
+				colors: colorScheme,
 				width: 1100,
-				height: d.length * 5 + 30,
+				height: d.length * 2.3 + 30,
 				// marginLeft: 100
 			});
 
 			// 添加Legend
-			var swatches = Swatches(chart.scales.color);
+			// var swatches = Swatches(chart.scales.color);
+			var swatches = Swatches(d3.scaleOrdinal(dept_list, colorScheme));//手动关联
+
 			$('#StackBarArea').append(swatches);
 			// 添加绘图
 			$('#StackBarArea').append(chart);

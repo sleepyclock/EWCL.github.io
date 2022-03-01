@@ -13,23 +13,24 @@
 	<link rel="shortcut icon" href="assets/images/favicon.png">
 
 	<link rel="stylesheet" media="screen" href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,700">
-	<link rel="stylesheet" href="assets/css/bootstrap.min.css">
-	<link rel="stylesheet" href="assets/css/font-awesome.min.css">
+	<link rel="stylesheet" href="/assets/css/bootstrap.min.css">
+	<link rel="stylesheet" href="/assets/css/font-awesome.min.css">
 
 	<!-- Custom styles for our template -->
-	<link rel="stylesheet" href="assets/css/bootstrap-theme.css" media="screen">
-	<link rel="stylesheet" href="assets/css/style.css">
+	<link rel="stylesheet" href="/assets/css/bootstrap-theme.css" media="screen">
+	<link rel="stylesheet" href="/assets/css/style.css">
 
-	<script src="./assets/js/d3/d3.min.js"></script>
-	<script src="./assets/js/d3/d3-sankey.min.js"></script>
-	<script src="./assets/js/d3/SankeyChart.js"></script>
-
+	<script src="/assets/js/d3/d3.min.js"></script>
+	<script src="/assets/js/d3/StackedBarChart.js"></script>
+	<script src="/assets/js/d3/Swatches.js"></script>
+	<script src="/assets/js/d3/htl.min.js"></script>
 
 	<!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
 	<!--[if lt IE 9]>
 	<script src="assets/js/html5shiv.js"></script>
 	<script src="assets/js/respond.min.js"></script>
 	<![endif]-->
+
 </head>
 
 <body>
@@ -45,7 +46,7 @@
 			</div>
 			<div class="navbar-collapse collapse">
 				<ul class="nav navbar-nav pull-right">
-					<li class="active"><a href="#">Home</a></li>
+					<li><a href="index.html">Home</a></li>
 					<li><a href="research.html">Our Research</a></li>
 					<!-- <li><a href="portfolio.html">Portfolio</a></li> -->
 					<li class="dropdown"> <a href="#" class="dropdown-toggle" data-toggle="dropdown">Data Analysis <b
@@ -67,7 +68,6 @@
 
 	<header id="head" class="secondary"></header>
 
-
 	<!-- container -->
 	<div class="container">
 
@@ -75,36 +75,86 @@
 			<div class="row">
 				<div class="col-md-12">
 					<header class="page-header">
-						<h1 class="page-title">各城市的资源要素在生产/消费视角下的跨地区流动</h1>
+						<h1 class="page-title">各城市的资源要素在生产/消费视角下的跨国流动比例</h1>
 					</header>
 				</div>
 			</div>
+
+
+			<div id="StackBarArea"></div>
+			<!-- <svg width="1280" height="768" id="svg" class="svgs" style='display: block; margin: 0 auto;'></svg> -->
+			<script>
+				// A map to convert PoltiFact codes into readable names, and whether
+				// the codes represent lies (negative) or truths (positive).
+				const rulings = {
+					"pants-fire": { name: "Pants on fire!", sign: -1 },
+					"false": { name: "False", sign: -1 },
+					"mostly-false": { name: "Mostly false", sign: -1 },
+					"barely-true": { name: "Mostly false", sign: -1 }, // pessimistic
+					"half-true": { name: "Half true", sign: 1 },
+					"mostly-true": { name: "Mostly true", sign: 1 },
+					"true": { name: "True", sign: 1 }
+				};
+
+				d3.csv("assets/js/d3/politifact.csv").then(d => {
+
+					console.log(" ------------- d: -------------")
+					console.log(d)
+
+					var politifact = d.filter(d => d.ruling in rulings);
+
+					console.log(" ------------- d.filter: -------------")
+					console.log(politifact)
+
+					// Compute the total number of rulings for each speaker.
+					const total = d3.rollup(politifact, D => d3.sum(D, d => d.count), d => d.speaker);
+					// Lastly, convert the counts to signed counts (negative for lies, positive for
+					// truths), and compute the normalized counts (bias; -1 for all lies, +1 for all
+					// truths). The returned array has an extra “rulings” property which we use to
+					// see the z-domain of the chart for stable ordering and color.
+
+					console.log(" ------------- const total: -------------")
+					console.log(total)
+
+					politifact = Object.assign(politifact.map(d => ({
+						speaker: d.speaker,
+						ruling: rulings[d.ruling].name,
+						count: d.count * rulings[d.ruling].sign,
+						proportion: d.count / total.get(d.speaker) * rulings[d.ruling].sign
+					})), {
+						rulings: [...d3.union(Object.values(rulings).map(d => d.name))]
+					});
+
+
+					console.log(" ------------- politifact: Object.assign -------------")
+					console.log(politifact)
+
+					const chart = StackedBarChart(politifact, {
+						x: d => d.proportion,
+						y: d => d.speaker,
+						z: d => d.ruling,
+						xFormat: "+%",
+						xLabel: "← more lies · Truthiness · more truths →",
+						yDomain: d3.groupSort(politifact, D => d3.sum(D, d => -Math.min(0, d.proportion)), d => d.speaker),
+						zDomain: politifact.rulings,
+						colors: d3.schemeSpectral[politifact.rulings.length],
+						width: 1400,
+						height: 400,
+						marginLeft: 50
+					});
+
+					// 添加Legend
+					var swatches = Swatches(chart.scales.color);
+					StackBarArea.append(swatches);
+					// 添加绘图
+					StackBarArea.append(chart);
+
+				}); // <--- end of then()
+
+			</script>
+
 		</div><!-- End container -->
 
-		<div id="SankeyArea"></div>
-		<!-- <svg width="1280" height="768" id="svg" class="svgs" style='display: block; margin: 0 auto;'></svg> -->
-		<script>
-
-
-			d3.csv("assets/js/d3/energy.csv").then(d => {
-
-				const chart = SankeyChart({
-					links: d
-				}, {
-					nodeGroup: d => d.id.split(/\W/)[0], // take first word for color
-					nodeAlign: d3.sankeyJustify, // e.g., d3.sankeyJustify; set by input above
-					linkColor: "source", // e.g., "source" or "target"; set by input above
-					format: (f => d => `${f(d)} TWh`)(d3.format(",.1~f")),
-					width: 1200,
-					height: 600
-				});
-
-				// 添加绘图
-				SankeyArea.append(chart);
-
-			}); // <--- end of then()
-
-		</script>
 
 	</div> <!-- /container -->
 
